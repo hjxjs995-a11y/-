@@ -1,0 +1,61 @@
+-- ตั้งค่าความเร็ว
+local MIN_SPEED = 16   -- ความเร็วปกติของ Roblox
+local MAX_SPEED = 150  -- ความเร็วสูงสุดที่ให้ผู้เล่นปรับ
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+local gui = script.Parent
+local frame = gui:WaitForChild("Frame")
+
+local bar = frame:WaitForChild("SpeedSlider")
+local button = frame:WaitForChild("SliderButton")
+local label = frame:WaitForChild("SpeedLabel")
+
+local UIS = game:GetService("UserInputService")
+local dragging = false
+
+
+-- ฟังก์ชันคำนวณความเร็ว
+local function setSpeed(percent)
+    local speed = MIN_SPEED + (MAX_SPEED - MIN_SPEED) * percent
+    humanoid.WalkSpeed = speed
+
+    label.Text = "Speed: " .. math.floor(speed)
+end
+
+
+-- อัปเดตตำแหน่งปุ่มเลื่อน
+local function updateSlider(xPosition)
+    local barPos = bar.AbsolutePosition.X
+    local barSize = bar.AbsoluteSize.X
+
+    local relativeX = math.clamp(xPosition - barPos, 0, barSize)
+    button.Position = UDim2.new(0, relativeX, 0.5, -button.AbsoluteSize.Y/2)
+
+    local percent = relativeX / barSize
+    setSpeed(percent)
+end
+
+
+-- เริ่มลากปุ่ม
+button.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+    end
+end)
+
+-- หยุดลาก
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- อัปเดตตำแหน่งปุ่มขณะลาก
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateSlider(input.Position.X)
+    end
+end)
